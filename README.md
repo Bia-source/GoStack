@@ -1,3 +1,3 @@
 # GoStack
-## Start Servidor
-# yarn start
+# Start Servidor
+comand:  yarn start
