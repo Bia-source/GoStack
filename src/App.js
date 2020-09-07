@@ -1,129 +1,50 @@
-import React, { useEffect, useState } from "react";
-
-import {
-  SafeAreaView,
-  View,
-  FlatList,
-  Text,
-  StatusBar,
-  StyleSheet,
-  TouchableOpacity,
-} from "react-native";
+import React, { useState, useEffect } from "react";
+import "./styles.css";
 import api from "./services/api";
 
-export default function App() {
-   
-   const [repositories, setRepository] = useState([]);
+function App() {
+  const [ projects, setProject] = useState([]);
 
+  useEffect(()=>{
+      api.get('repositories').then(res =>{
+        setProject(res.data);
+      })
+  }, []);
 
-   useEffect(() =>{
-      api.get('repositories').then(res => setRepository(res.data));
-   }, []);
+  async function handleAddRepository() {
+    api.post('repositories', {
+      title: `mais um curso ${Date.now()}`,
+      url: "https://github.com/rocketseat-education/bootcamp-gostack-desafios/tree/master/desafio-conceitos-nodejs#--desafio-02-conceitos-do-nodejs",
+      techs: ["NodeJS", "React", "Adonis"]}).then(res =>{
+      setProject([...projects, res.data]);
+    })
+  }
 
-  async function handleLikeRepository(id) {
-   const response = await api.post(`repositories/${id}/like`);
-   
-   const repositoryUpdate = repositories.map(res => {
-     if(res.id === id){
-       return response.data;
-     }else{
-       return res;
-     }
-   });
+  async function handleRemoveRepository(id) {
+    await api.delete(`repositories/${id}`).then(res =>{
+      console.log(res.status);
 
-   setRepository(repositoryUpdate);
+      setProject(projects.filter(res => res.id != id))
+    });
   }
 
   return (
-    <>
-      <StatusBar barStyle="light-content" backgroundColor="#7159c1" />
-      <SafeAreaView style={styles.container}>
-       <FlatList 
-       style={styles.container}
-       data={repositories}
-       keyExtractor={repositories => repositories.id}
-       renderItem={({ item }) => (
-        <View style={styles.repositoryContainer}>
-        <Text style={styles.repository}>{item.title}</Text>
-
-        <View style={styles.techsContainer}>
-          {item.techs.map(tech => (
-          <Text key={tech} style={styles.tech}>
-            {tech}
-            </Text>
-            ))}
-        </View>
-
-        <View style={styles.likesContainer}>
-          <Text
-            style={styles.likeText}
-            testID={`item-likes-${item.id}`}
-          >
-            {item.likes} curtidas
-          </Text>
-        </View>
-
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => handleLikeRepository(item.id)}
-          testID={`like-button-${item.id}`}
-        >
-          <Text style={styles.buttonText}>Curtir</Text>
-        </TouchableOpacity>
-      </View>
-       )}/>
-      </SafeAreaView>
-    </>
+    <div>
+      <ul data-testid="repository-list">
+        {projects.map(res => <li key={res.id}> {res.title} 
+          <button onClick={() => handleRemoveRepository(res.id)}>
+            Remover
+          </button>
+        </li>)}
+          
+         
+         
+      
+      </ul>
+      
+      <button onClick={handleAddRepository}>Adicionar</button>
+    </div>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#7159c1",
-  },
-  repositoryContainer: {
-    marginBottom: 15,
-    marginHorizontal: 15,
-    backgroundColor: "#fff",
-    padding: 20,
-  },
-  repository: {
-    fontSize: 32,
-    fontWeight: "bold",
-  },
-  techsContainer: {
-    flexDirection: "row",
-    marginTop: 10,
-  },
-  tech: {
-    fontSize: 12,
-    fontWeight: "bold",
-    marginRight: 10,
-    backgroundColor: "#04d361",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    color: "#fff",
-  },
-  likesContainer: {
-    marginTop: 15,
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  likeText: {
-    fontSize: 14,
-    fontWeight: "bold",
-    marginRight: 10,
-  },
-  button: {
-    marginTop: 10,
-  },
-  buttonText: {
-    fontSize: 14,
-    fontWeight: "bold",
-    marginRight: 10,
-    color: "#fff",
-    backgroundColor: "#7159c1",
-    padding: 15,
-  },
-});
+export default App;
